@@ -1,6 +1,7 @@
 package com.KrzysztofRyzak.medicalclinic.service;
 
 import com.KrzysztofRyzak.medicalclinic.exception.EmailAlreadyInUseException;
+import com.KrzysztofRyzak.medicalclinic.exception.PatientNotFoundException;
 import com.KrzysztofRyzak.medicalclinic.model.Patient;
 import com.KrzysztofRyzak.medicalclinic.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +33,10 @@ public class PatientService {
 
     public void deletePatient(String email) {
         patientRepository.deleteByEmail(email);
+    }
+
+    public Patient updatePatient(String email, Patient updatedPatient) {
+        return patientRepository.editPatientByEmail(email, updatedPatient)
+                .orElseThrow(() -> new PatientNotFoundException(email));
     }
 }

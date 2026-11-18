@@ -18,7 +18,7 @@ public class PatientController {
 
     //GET /patients
     @GetMapping
-    public List<Patient>  getPatients() {
+    public List<Patient> getPatients() {
         return service.getPatients();
     }
 
@@ -27,7 +27,7 @@ public class PatientController {
         return service.getPatientByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Patient not found"
-        ));
+                ));
     }
 
     @PostMapping
@@ -42,4 +42,10 @@ public class PatientController {
         service.deletePatient(email);
     }
 
+    @PutMapping("/{email}")
+    public Patient updatePatient(
+            @PathVariable String email,
+            @RequestBody Patient updatedPatient) {
+        return service.updatePatient(email, updatedPatient);
+    }
 }
