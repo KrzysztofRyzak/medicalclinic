@@ -1,5 +1,6 @@
 package com.KrzysztofRyzak.medicalclinic.service;
 
+import com.KrzysztofRyzak.medicalclinic.ChangePasswordCommand;
 import com.KrzysztofRyzak.medicalclinic.exception.EmailAlreadyInUseException;
 import com.KrzysztofRyzak.medicalclinic.exception.PatientNotFoundException;
 import com.KrzysztofRyzak.medicalclinic.model.Patient;
@@ -38,5 +39,11 @@ public class PatientService {
     public Patient updatePatient(String email, Patient updatedPatient) {
         return patientRepository.editPatientByEmail(email, updatedPatient)
                 .orElseThrow(() -> new PatientNotFoundException(email));
+    }
+
+    public void changePassword(String email, ChangePasswordCommand changePasswordCommand) {
+        Patient patient = patientRepository.findByEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
+        patient.setPassword(changePasswordCommand.newPassword());
     }
 }

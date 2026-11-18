@@ -1,5 +1,6 @@
 package com.KrzysztofRyzak.medicalclinic.controller;
 
+import com.KrzysztofRyzak.medicalclinic.ChangePasswordCommand;
 import com.KrzysztofRyzak.medicalclinic.model.Patient;
 import com.KrzysztofRyzak.medicalclinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
@@ -48,4 +49,13 @@ public class PatientController {
             @RequestBody Patient updatedPatient) {
         return service.updatePatient(email, updatedPatient);
     }
+
+    @PatchMapping("/{email}/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
+            @PathVariable String email,
+            @RequestBody ChangePasswordCommand changePasswordCommand) {
+        service.changePassword(email, changePasswordCommand);
+    }
 }
+
