@@ -1,12 +1,12 @@
 package com.KrzysztofRyzak.medicalclinic.controller;
 
 import com.KrzysztofRyzak.medicalclinic.ChangePasswordCommand;
+import com.KrzysztofRyzak.medicalclinic.dto.PatientDto;
 import com.KrzysztofRyzak.medicalclinic.model.Patient;
 import com.KrzysztofRyzak.medicalclinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -19,21 +19,18 @@ public class PatientController {
 
     //GET /patients
     @GetMapping
-    public List<Patient> getPatients() {
+    public List<PatientDto> getPatients() {
         return service.getPatients();
     }
 
     @GetMapping("/{email}")
-    public Patient getPatientByEmail(@PathVariable String email) {
-        return service.getPatientByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Patient not found"
-                ));
+    public PatientDto getPatientByEmail(@PathVariable String email) {
+        return service.getPatientByEmail(email);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Patient addPatient(@RequestBody Patient patient) {
+    public PatientDto addPatient(@RequestBody Patient patient) {
         return service.addPatient(patient);
     }
 
@@ -44,7 +41,7 @@ public class PatientController {
     }
 
     @PutMapping("/{email}")
-    public Patient updatePatient(
+    public PatientDto updatePatient(
             @PathVariable String email,
             @RequestBody Patient updatedPatient) {
         return service.updatePatient(email, updatedPatient);
