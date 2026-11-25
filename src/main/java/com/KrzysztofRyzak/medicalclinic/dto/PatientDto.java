@@ -1,10 +1,13 @@
 package com.KrzysztofRyzak.medicalclinic.dto;
 
+import java.time.LocalDate;
+
 public record PatientDto(
-        String firstName,
-        String lastname,
         String email,
-        String phoneNumber
+        String firstName,
+        String lastName,
+        String phoneNumber,
+        LocalDate birthday
 ) {
 
 }
