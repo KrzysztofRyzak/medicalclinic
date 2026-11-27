@@ -1,6 +1,9 @@
 package com.KrzysztofRyzak.medicalclinic.service;
 
+import com.KrzysztofRyzak.medicalclinic.ChangePasswordCommand;
 import com.KrzysztofRyzak.medicalclinic.dto.PatientDto;
+import com.KrzysztofRyzak.medicalclinic.exception.EmailAlreadyInUseException;
+import com.KrzysztofRyzak.medicalclinic.exception.PatientNotFoundException;
 import com.KrzysztofRyzak.medicalclinic.mapper.PatientMapper;
 import com.KrzysztofRyzak.medicalclinic.model.Patient;
 import com.KrzysztofRyzak.medicalclinic.repository.PatientRepository;
@@ -14,6 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class PatientServiceTest {
@@ -33,25 +37,12 @@ public class PatientServiceTest {
     void getPatients_DataCorrect_PatientsReturned() {
         // given
         List<Patient> patients = List.of(
-                new Patient(
-                        "jan.kowalski@example.com",
-                        "Password123!",
-                        "ABC123456",
-                        "Jan",
-                        "Kowalski",
-                        "123456789",
-                        LocalDate.of(1995, 5, 15)
-                ),
-                new Patient(
-                        "anna.nowak@example.com",
-                        "Password456!",
-                        "XYZ654321",
-                        "Anna",
-                        "Nowak",
-                        "987654321",
-                        LocalDate.of(1998, 8, 22)
-                )
-        );
+                new Patient("jan.kowalski@example.com", "Password123!",
+                        "ABC123456", "Jan", "Kowalski", "123456789",
+                        LocalDate.of(1995, 5, 15)),
+                new Patient("anna.nowak@example.com", "Password456!", "XYZ654321",
+                        "Anna", "Nowak", "987654321",
+                        LocalDate.of(1998, 8, 22)));
         when(patientRepository.findAll()).thenReturn(patients);
         // when
         List<PatientDto> result = patientService.getPatients();
@@ -74,15 +65,9 @@ public class PatientServiceTest {
     @Test
     void getPatientByEmail_PatientExists_PatientReturned() {
         // given
-        Patient patient = new Patient(
-                "jan.kowalski@example.com",
-                "Password123!",
-                "ABC123456",
-                "Jan",
-                "Kowalski",
-                "123456789",
-                LocalDate.of(1995, 5, 15)
-        );
+        Patient patient = new Patient("jan.kowalski@example.com", "Password123!", "ABC123456",
+                "Jan", "Kowalski", "123456789",
+                LocalDate.of(1995, 5, 15));
         when(patientRepository.findByEmail(patient.getEmail())).thenReturn(Optional.of(patient));
         // when
         PatientDto result = patientService.getPatientByEmail(patient.getEmail());
@@ -99,15 +84,9 @@ public class PatientServiceTest {
     @Test
     void addPatient_PatientDoesNotExist_PatientReturned() {
         // given
-        Patient patient = new Patient(
-                "jan.kowalski@example.com",
-                "Password123!",
-                "ABC123456",
-                "Jan",
-                "Kowalski",
-                "123456789",
-                LocalDate.of(1995, 5, 15)
-        );
+        Patient patient = new Patient("jan.kowalski@example.com", "Password123!",
+                "ABC123456", "Jan", "Kowalski", "123456789",
+                LocalDate.of(1995, 5, 15));
         when(patientRepository.findByEmail(patient.getEmail())).thenReturn(Optional.empty());
         when(patientRepository.save(patient)).thenReturn(patient);
         // when
@@ -126,25 +105,13 @@ public class PatientServiceTest {
     void updatePatient_PatientExists_UpdatedPatientReturned() {
         // given
         String email = "jan.kowalski@example.com";
-        Patient updatedPatient = new Patient(
-                null,
-                null,
-                "ABC123456",
-                "Jan",
-                "Kowalski",
-                "123456789",
-                LocalDate.of(1995, 5, 15)
-        );
+        Patient updatedPatient = new Patient(null, null, "ABC123456",
+                "Jan", "Kowalski", "123456789",
+                LocalDate.of(1995, 5, 15));
 
-        Patient savedPatient = new Patient(
-                "jan.kowalski@example.com",
-                "Password123!",
-                "ABC123456",
-                "Jan",
-                "Kowalski",
-                "123456789",
-                LocalDate.of(1995, 5, 15)
-        );
+        Patient savedPatient = new Patient("jan.kowalski@example.com", "Password123!",
+                "ABC123456", "Jan", "Kowalski", "123456789",
+                LocalDate.of(1995, 5, 15));
 
         when(patientRepository.editPatientByEmail(email, updatedPatient)).thenReturn(Optional.of(savedPatient));
         // when
@@ -157,5 +124,84 @@ public class PatientServiceTest {
                 () -> Assertions.assertEquals("123456789", result.phoneNumber()),
                 () -> Assertions.assertEquals(LocalDate.of(1995, 5, 15), result.birthday())
         );
+    }
+
+    @Test
+    void getPatientByEmail_PatientDoesNotExist_PatientNotFoundExceptionThrown() {
+        // given
+        String email = "jan.kowalski@example.com";
+        when(patientRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // when & then
+        PatientNotFoundException exception = Assertions.assertThrows(PatientNotFoundException.class,
+                () -> patientService.getPatientByEmail(email));
+        Assertions.assertEquals("Patient not found with email: " + email,
+                exception.getMessage());
+    }
+
+    @Test
+    void addPatient_PatientAlreadyExists_EmailAlreadyInUseExceptionThrown() {
+        // given
+        Patient patient = new Patient("jan.kowalski@example.com", "Password123!",
+                "ABC123456", "Jan", "Kowalski", "123456789",
+                LocalDate.of(1995, 5, 15));
+        when(patientRepository.findByEmail(patient.getEmail()))
+                .thenReturn(Optional.of(patient));
+
+        // when & then
+        EmailAlreadyInUseException exception = Assertions.assertThrows(
+                EmailAlreadyInUseException.class,
+                () -> patientService.addPatient(patient));
+        Assertions.assertEquals("Email already in use: " + patient.getEmail(),
+                exception.getMessage());
+    }
+
+    @Test
+    void deletePatient_PatientExists_PatientDeleted() {
+        // given
+        String email = "jan.kowalski@example.com";
+        when(patientRepository.deleteByEmail(email)).thenReturn(true);
+
+        // when
+        patientService.deletePatient(email);
+
+        // then
+        verify(patientRepository).deleteByEmail(email);
+    }
+
+    @Test
+    void updatePatient_PatientDoesNotExist_PatientNotFoundExceptionThrown() {
+        // given
+        String email = "jan.kowalski@example.com";
+        Patient updatedPatient = new Patient(null, null, "XYZ654321",
+                "Adam", "Nowak", "987654321",
+                LocalDate.of(1998, 8, 22));
+        when(patientRepository.editPatientByEmail(email, updatedPatient))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class,
+                () -> patientService.updatePatient(email, updatedPatient));
+
+        Assertions.assertEquals("Patient not found with email: " + email,
+                exception.getMessage());
+    }
+
+    @Test
+    void changePassword_PatientDoesNotExist_PatientNotFoundExceptionThrown() {
+        // given
+        String email = "jan.kowalski@example.com";
+        ChangePasswordCommand changePasswordCommand =
+                new ChangePasswordCommand("NewPassword456!");
+        when(patientRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // when & then
+        PatientNotFoundException exception = Assertions.assertThrows(
+                PatientNotFoundException.class,
+                () -> patientService.changePassword(email, changePasswordCommand));
+
+        Assertions.assertEquals("Patient not found with email: " + email,
+                exception.getMessage());
     }
 }
